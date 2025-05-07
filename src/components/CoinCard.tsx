@@ -1,9 +1,18 @@
 "use client";
 
-import { ArrowDown, ArrowUp, MoreHorizontal, Star } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  MoreHorizontal,
+  Star,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatPercentage, formatNumber } from "@/lib/utils";
+import { useState, useEffect, useRef } from "react";
+import { apiCallsTracker } from "@/components/Dashboard";
 
 interface CoinCardProps {
   coin: {
@@ -20,6 +29,11 @@ interface CoinCardProps {
   onClick: () => void;
   isSelected: boolean;
   view: string;
+  onPriceUpdate: (price: number) => void;
+  livePriceData?: {
+    price: number;
+    lastUpdated: Date;
+  };
 }
 
 export default function CoinCard({
@@ -27,8 +41,15 @@ export default function CoinCard({
   onClick,
   isSelected,
   view,
+  onPriceUpdate,
+  livePriceData,
 }: CoinCardProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const {
+    id,
     name,
     symbol,
     current_price,
@@ -38,7 +59,132 @@ export default function CoinCard({
     circulating_supply,
     image,
   } = coin;
+
   const isPositive = price_change_percentage_24h >= 0;
+
+  // Get live price and last updated time from props or use null
+  const livePrice = livePriceData?.price || null;
+  const lastUpdated = livePriceData?.lastUpdated || null;
+
+  // Function to check if we can make an API call
+  const canMakeApiCall = () => {
+    const now = Date.now();
+
+    // If we're in a throttled state, check if enough time has passed
+    if (apiCallsTracker.isThrottled) {
+      if (now > apiCallsTracker.resetTime) {
+        // Reset throttled state after the cooldown period
+        apiCallsTracker.isThrottled = false;
+        apiCallsTracker.callCount = 0;
+      } else {
+        return false;
+      }
+    }
+
+    // Ensure at least 2 seconds between API calls
+    if (now - apiCallsTracker.lastCall < 2000) {
+      return false;
+    }
+
+    // Allow up to 10 calls in a 60-second window
+    if (apiCallsTracker.callCount >= 10) {
+      // Set throttled state with a 60-second cooldown
+      apiCallsTracker.isThrottled = true;
+      apiCallsTracker.resetTime = now + 60000;
+      return false;
+    }
+
+    return true;
+  };
+
+  // Function to fetch live price data
+  const fetchLivePrice = async (force = false) => {
+    // Skip if already refreshing
+    if (isRefreshing) return;
+
+    // Check if we can make an API call, unless forced
+    if (!force && !canMakeApiCall()) {
+      setApiError("API rate limited. Try again later.");
+      return;
+    }
+
+    setIsRefreshing(true);
+    setApiError(null);
+
+    try {
+      // Update API call tracker
+      apiCallsTracker.lastCall = Date.now();
+      apiCallsTracker.callCount++;
+
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd&include_24hr_change=true`
+      );
+
+      // Check if response is OK
+      if (!response.ok) {
+        const text = await response.text();
+        if (text.includes("Throttled")) {
+          apiCallsTracker.isThrottled = true;
+          apiCallsTracker.resetTime = Date.now() + 60000;
+          throw new Error("API rate limited. Try again later.");
+        }
+        throw new Error(`API error: ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data[id]) {
+        const price = data[id].usd;
+        onPriceUpdate(price); // Update the parent component with the new price
+        setApiError(null);
+      } else {
+        throw new Error("No data returned for this coin");
+      }
+    } catch (error) {
+      console.error("Error fetching live price:", error);
+      setApiError(
+        error instanceof Error ? error.message : "Failed to fetch price"
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Fetch live price on initial render with a staggered delay to avoid multiple simultaneous requests
+  useEffect(() => {
+    const initialDelay = Math.random() * 2000; // Random delay between 0-2 seconds
+    const timeout = setTimeout(() => {
+      fetchLivePrice();
+    }, initialDelay);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Calculate if the live price is higher or lower than the stored price
+  const livePriceChange = livePrice !== null ? livePrice - current_price : 0;
+  const livePriceIsPositive = livePriceChange >= 0;
+
+  // Format the time since last update
+  const getTimeSinceUpdate = () => {
+    if (!lastUpdated) return "";
+
+    const seconds = Math.floor(
+      (new Date().getTime() - lastUpdated.getTime()) / 1000
+    );
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  };
 
   if (view === "list") {
     return (
@@ -74,7 +220,20 @@ export default function CoinCard({
                 </div>
                 <div className="flex items-center mt-1">
                   <p className="font-mono font-bold">
-                    {formatCurrency(current_price)}
+                    {livePrice !== null
+                      ? formatCurrency(livePrice)
+                      : formatCurrency(current_price)}
+                    {livePrice !== null && livePrice !== current_price && (
+                      <span
+                        className={`ml-1 text-xs ${
+                          livePriceIsPositive
+                            ? "text-[#00FFAB]"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {livePriceIsPositive ? "↑" : "↓"}
+                      </span>
+                    )}
                   </p>
                   <div
                     className={`flex items-center ml-2 text-xs px-1.5 py-0.5 rounded-full ${
@@ -101,7 +260,26 @@ export default function CoinCard({
               </p>
             </div>
 
-            <div className="flex items-center space-x-1">
+            {/* Right section - Actions */}
+            <div className="flex items-center ml-4">
+              {/* <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-[#ECECEC]/70 hover:text-[#00FFAB] hover:bg-[#1C1C1C]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetchLivePrice(true);
+                }}
+                title={apiError || "Refresh price"}
+              >
+                {apiError ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                ) : (
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                )}
+              </Button> */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -152,19 +330,69 @@ export default function CoinCard({
               </div>
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full text-[#ECECEC]/70 hover:text-[#00FFAB] hover:bg-[#1C1C1C]"
-            >
-              <Star className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center">
+              {/* {lastUpdated && !apiError && (
+                <span className="text-xs text-[#ECECEC]/50 mr-2">
+                  {getTimeSinceUpdate()}
+                </span>
+              )}
+              {apiError && (
+                <span
+                  className="text-xs text-amber-400/80 mr-2"
+                  title={apiError}
+                >
+                  API limited
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-[#ECECEC]/70 hover:text-[#00FFAB] hover:bg-[#1C1C1C]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetchLivePrice(true);
+                }}
+                title={apiError || "Refresh price"}
+              >
+                {apiError ? (
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                ) : (
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                )}
+              </Button> */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-[#ECECEC]/70 hover:text-[#00FFAB] hover:bg-[#1C1C1C]"
+              >
+                <Star className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="flex items-baseline justify-between mb-4">
-            <p className="font-mono font-bold text-xl">
-              {formatCurrency(current_price)}
-            </p>
+            <div>
+              <p className="font-mono font-bold text-xl">
+                {livePrice !== null
+                  ? formatCurrency(livePrice)
+                  : formatCurrency(current_price)}
+              </p>
+              {/* {livePrice !== null &&
+                livePrice !== current_price &&
+                !apiError && (
+                  <p
+                    className={`text-xs ${
+                      livePriceIsPositive ? "text-[#00FFAB]" : "text-red-400"
+                    }`}
+                  >
+                    {livePriceIsPositive ? "↑" : "↓"}{" "}
+                    {formatCurrency(Math.abs(livePriceChange))} since last
+                    update
+                  </p>
+                )} */}
+            </div>
             <div
               className={`flex items-center text-sm ${
                 isPositive ? "text-[#00FFAB]" : "text-red-400"

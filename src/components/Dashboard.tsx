@@ -36,6 +36,22 @@ interface MarketData {
   btc_dominance: number;
 }
 
+// Interface for live price data
+interface LivePriceData {
+  [coinId: string]: {
+    price: number;
+    lastUpdated: Date;
+  };
+}
+
+// Shared API call tracker
+export const apiCallsTracker = {
+  lastCall: 0,
+  callCount: 0,
+  isThrottled: false,
+  resetTime: 0,
+};
+
 export default function Dashboard() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [marketData, setMarketData] = useState<MarketData | null>(null);
@@ -43,6 +59,8 @@ export default function Dashboard() {
   const [timeframe, setTimeframe] = useState("24h");
   const [selectedCoin, setSelectedCoin] = useState("bitcoin");
   const [view, setView] = useState("grid");
+  const [livePriceData, setLivePriceData] = useState<LivePriceData>({});
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -135,6 +153,128 @@ export default function Dashboard() {
     }
   };
 
+  // Function to check if we can make an API call
+  const canMakeApiCall = () => {
+    const now = Date.now();
+
+    // If we're in a throttled state, check if enough time has passed
+    if (apiCallsTracker.isThrottled) {
+      if (now > apiCallsTracker.resetTime) {
+        // Reset throttled state after the cooldown period
+        apiCallsTracker.isThrottled = false;
+        apiCallsTracker.callCount = 0;
+      } else {
+        return false;
+      }
+    }
+
+    // Ensure at least 2 seconds between API calls
+    if (now - apiCallsTracker.lastCall < 2000) {
+      return false;
+    }
+
+    // Allow up to 10 calls in a 60-second window
+    if (apiCallsTracker.callCount >= 10) {
+      // Set throttled state with a 60-second cooldown
+      apiCallsTracker.isThrottled = true;
+      apiCallsTracker.resetTime = now + 60000;
+      return false;
+    }
+
+    return true;
+  };
+
+  // Function to fetch live price for a specific coin
+  const fetchLivePrice = async (coinId: string) => {
+    if (!canMakeApiCall()) {
+      return null;
+    }
+
+    try {
+      // Update API call tracker
+      apiCallsTracker.lastCall = Date.now();
+      apiCallsTracker.callCount++;
+
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`
+      );
+
+      // Check if response is OK
+      if (!response.ok) {
+        const text = await response.text();
+        if (text.includes("Throttled")) {
+          apiCallsTracker.isThrottled = true;
+          apiCallsTracker.resetTime = Date.now() + 60000;
+          throw new Error("API rate limited");
+        }
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data[coinId]) {
+        return data[coinId].usd;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error fetching live price for ${coinId}:`, error);
+      return null;
+    }
+  };
+
+  // Function to refresh all prices
+  const refreshAllPrices = async () => {
+    if (isRefreshingAll) return;
+
+    setIsRefreshingAll(true);
+
+    try {
+      // Prioritize the selected coin
+      const selectedPrice = await fetchLivePrice(selectedCoin);
+      if (selectedPrice !== null) {
+        setLivePriceData((prev) => ({
+          ...prev,
+          [selectedCoin]: {
+            price: selectedPrice,
+            lastUpdated: new Date(),
+          },
+        }));
+      }
+
+      // Then fetch others with a delay between each
+      for (const coin of coins) {
+        if (coin.id !== selectedCoin) {
+          // Add a delay to avoid rate limiting
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          const price = await fetchLivePrice(coin.id);
+          if (price !== null) {
+            setLivePriceData((prev) => ({
+              ...prev,
+              [coin.id]: {
+                price: price,
+                lastUpdated: new Date(),
+              },
+            }));
+          }
+        }
+      }
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
+  // Update live price data when a coin provides new data
+  const updateLivePrice = (coinId: string, price: number) => {
+    setLivePriceData((prev) => ({
+      ...prev,
+      [coinId]: {
+        price: price,
+        lastUpdated: new Date(),
+      },
+    }));
+  };
+
   useEffect(() => {
     fetchData();
 
@@ -146,8 +286,16 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // Initial fetch of live prices
+  useEffect(() => {
+    if (!isLoading && coins.length > 0) {
+      refreshAllPrices();
+    }
+  }, [isLoading, coins]);
+
   const handleRefresh = () => {
     fetchData();
+    refreshAllPrices();
   };
 
   return (
@@ -170,10 +318,15 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
+              disabled={isRefreshingAll}
               className="border-[#2C3E50] bg-[#2C3E50]/50 text-[#ECECEC] hover:bg-[#2C3E50] hover:text-[#00FFAB] transition-all duration-300"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${
+                  isRefreshingAll ? "animate-spin" : ""
+                }`}
+              />
+              {isRefreshingAll ? "Refreshing..." : "Refresh"}
             </Button>
 
             <DropdownMenu>
@@ -255,6 +408,8 @@ export default function Dashboard() {
                     onClick={() => setSelectedCoin(coin.id)}
                     isSelected={selectedCoin === coin.id}
                     view={view}
+                    onPriceUpdate={(price) => updateLivePrice(coin.id, price)}
+                    livePriceData={livePriceData[coin.id]}
                   />
                 ))}
               </div>
@@ -268,7 +423,11 @@ export default function Dashboard() {
                   Price Chart
                 </h2>
               </div>
-              <PriceChart coinId={selectedCoin} timeframe={timeframe} />
+              <PriceChart
+                coinId={selectedCoin}
+                timeframe={timeframe}
+                livePriceData={livePriceData[selectedCoin]}
+              />
             </div>
           </>
         )}

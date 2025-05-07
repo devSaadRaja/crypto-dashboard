@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { generateChartData } from "@/lib/utils";
+import { formatCurrency, generateChartData } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Download, ZoomIn, ZoomOut } from "lucide-react";
 
@@ -16,9 +16,17 @@ declare global {
 interface PriceChartProps {
   coinId: string;
   timeframe: string;
+  livePriceData?: {
+    price: number;
+    lastUpdated: Date;
+  };
 }
 
-export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
+export default function PriceChart({
+  coinId,
+  timeframe,
+  livePriceData,
+}: PriceChartProps) {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [highestValue, setHighestValue] = useState(0);
@@ -135,10 +143,24 @@ export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
 
   // Calculate price change
   const firstPrice = chartData[0]?.value || 0;
-  const lastPrice = chartData[chartData.length - 1]?.value || 0;
+  const lastPrice =
+    livePriceData?.price || chartData[chartData.length - 1]?.value || 0;
   const priceChange = lastPrice - firstPrice;
   const priceChangePercentage = (priceChange / firstPrice) * 100;
   const isPositive = priceChange >= 0;
+
+  // Format the time since last update
+  const getTimeSinceUpdate = () => {
+    if (!livePriceData?.lastUpdated) return "";
+
+    const seconds = Math.floor(
+      (new Date().getTime() - livePriceData.lastUpdated.getTime()) / 1000
+    );
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  };
 
   return (
     <Card className="bg-[#2C3E50]/80 backdrop-blur-sm border-0 overflow-hidden">
@@ -147,9 +169,9 @@ export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
           <div>
             <div className="flex items-center">
               <h3 className="text-xl font-mono font-bold">
-                {lastPrice.toFixed(2)}
+                {formatCurrency(lastPrice)}
               </h3>
-              <span
+              {/* <span
                 className={`ml-2 text-sm px-2 py-0.5 rounded-full ${
                   isPositive
                     ? "bg-[#00FFAB]/10 text-[#00FFAB]"
@@ -157,9 +179,14 @@ export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
                 }`}
               >
                 {isPositive ? "+" : ""}
-                {priceChange.toFixed(2)} ({isPositive ? "+" : ""}
+                {formatCurrency(priceChange)} ({isPositive ? "+" : ""}
                 {priceChangePercentage.toFixed(2)}%)
-              </span>
+              </span> */}
+              {livePriceData?.lastUpdated && (
+                <span className="ml-2 text-xs text-[#ECECEC]/50">
+                  Updated {getTimeSinceUpdate()}
+                </span>
+              )}
             </div>
             <p className="text-sm text-[#ECECEC]/70 mt-1">
               {new Date().toLocaleDateString()} · {timeframe.toUpperCase()}{" "}
@@ -167,7 +194,7 @@ export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 mt-4 md:mt-0">
+          {/* <div className="flex items-center space-x-2 mt-4 md:mt-0">
             <Button
               variant="outline"
               size="icon"
@@ -189,7 +216,7 @@ export default function PriceChart({ coinId, timeframe }: PriceChartProps) {
             >
               <Download className="h-4 w-4" />
             </Button>
-          </div>
+          </div> */}
         </div>
 
         <div className="h-[500px] w-full relative">
