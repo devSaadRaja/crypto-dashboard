@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 225 73% 57%;
+    --primary-foreground: 240 5% 98%;
+    --secondary: 271 100% 50%;
+    --secondary-foreground: 240 5% 98%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 16 100% 50%;
+    --accent-foreground: 240 5% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 240 5% 98%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 240 5% 65%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+:root {
+  --color-fcf: #4169e1;
+  --color-pv: #bf00ff;
+  --chart-1: 225 70% 57%;
+  --chart-2: 285 100% 50%;
+  --chart-3: 16 100% 50%;
+  --chart-4: 0 0% 80%;
+  --chart-5: 0 0% 60%;
+}
+
+@layer utilities {
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px rgba(191, 0, 255, 0.2),
+        0 0 10px rgba(191, 0, 255, 0.2);
+    }
+    to {
+      box-shadow: 0 0 10px rgba(191, 0, 255, 0.4),
+        0 0 20px rgba(191, 0, 255, 0.4);
+    }
+  }
+
+  .gradient-text {
+    background: linear-gradient(90deg, #4169e1, #bf00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+}
