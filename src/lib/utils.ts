@@ -14,6 +14,19 @@ export function formatCurrency(value: number, decimals = 2): string {
   }).format(value);
 }
 
+export function formatCurrencyShort(value: number): string {
+  // Format large numbers with appropriate suffixes
+  if (value >= 1e9) {
+    return `$${(value / 1e9).toFixed(2)}B`;
+  } else if (value >= 1e6) {
+    return `$${(value / 1e6).toFixed(2)}M`;
+  } else if (value >= 1e3) {
+    return `$${(value / 1e3).toFixed(2)}K`;
+  } else {
+    return `$${value.toFixed(2)}`;
+  }
+}
+
 export function formatPercentage(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "percent",

@@ -52,8 +52,6 @@ export default function Header() {
             <NavItem href="#" active>
               Dashboard
             </NavItem>
-            <NavItem href="#">Coin Detail</NavItem>
-            <NavItem href="#">Compare</NavItem>
             <NavItem href="#">Watchlist</NavItem>
             <NavItem href="#">Leaderboard</NavItem>
             <NavItem href="#">News</NavItem>
