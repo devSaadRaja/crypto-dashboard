@@ -39,3 +39,25 @@ export interface CoinGeckoResponse {
   atl_date: string;
   last_updated: string;
 }
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  sourceUrl?: string;
+  publishedAt: string;
+  categories: string[]; // Add categories field
+}
+
+export interface RelatedLink {
+  title: string;
+  url: string;
+}
+
+export interface NewsDetail extends NewsItem {
+  content: string;
+  imageUrl?: string;
+  tags?: string[];
+  relatedLinks?: RelatedLink[];
+}

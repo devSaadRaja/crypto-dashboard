@@ -68,6 +68,10 @@ body {
   font-family: "JetBrains Mono", monospace;
 }
 
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -108,4 +112,45 @@ body {
   -webkit-background-clip: text;
   color: transparent;
   background-image: linear-gradient(to right, #00ffab, #00ffab70);
+}
+
+/* Ticker animation */
+.ticker-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.ticker-wrapper {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker 60s linear infinite;
+  position: relative;
+  will-change: transform;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pause animation on hover */
+.ticker-container:hover .ticker-wrapper {
+  animation-play-state: paused;
+}
+
+/* Ticker item styling */
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  border-right: 1px solid rgba(28, 28, 28, 0.2);
+}
+
+.ticker-item:last-child {
+  border-right: none;
 }
