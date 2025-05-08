@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown, RefreshCw, TrendingUp, Zap } from "lucide-react";
-import Header from "@/components/Header";
 import CoinCard from "@/components/CoinCard";
 import MarketMetrics from "@/components/MarketMetrics";
 import PriceChart from "@/components/PriceChart";
@@ -299,11 +298,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1C1C1C] text-[#ECECEC] font-sans">
+    <div className="min-h-screen text-[#ECECEC] font-sans">
       <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#2C3E50]/50 to-transparent pointer-events-none" />
-
-      <Header />
-
       <main className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div className="flex flex-col mb-4 md:mb-0">

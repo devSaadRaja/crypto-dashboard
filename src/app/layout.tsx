@@ -5,6 +5,7 @@ import "./globals.css";
 
 import WagmiConfig from "./WagmiConfig";
 import { Toaster } from "react-hot-toast";
+import Header from "@/components/Header";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -50,6 +51,9 @@ export default function RootLayout({
               //   },
               // }}
             />
+
+            <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#2C3E50]/50 to-transparent pointer-events-none" />
+            <Header />
 
             <div>{children}</div>
           </ThemeProvider>

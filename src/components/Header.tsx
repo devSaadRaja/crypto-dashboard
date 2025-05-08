@@ -103,9 +103,11 @@ export default function Header() {
             <MobileNavItem href="#" active>
               Dashboard
             </MobileNavItem>
+            <MobileNavItem href="#">Watchlist</MobileNavItem>
+            <MobileNavItem href="#">Leaderboard</MobileNavItem>
+            <MobileNavItem href="#">News</MobileNavItem>
             <MobileNavItem href="#">Markets</MobileNavItem>
             <MobileNavItem href="#">Portfolio</MobileNavItem>
-            <MobileNavItem href="#">News</MobileNavItem>
           </nav>
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2C3E50] px-6">
             <Button variant="ghost" size="sm" className="text-[#ECECEC]">
