@@ -19,7 +19,7 @@ export default async function MarketsPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#1C1C1C] text-[#ECECEC]">
+    <main className="min-h-screen text-[#ECECEC]">
       <div className="container mx-auto space-y-6 p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl md:text-3xl font-bold font-inter">

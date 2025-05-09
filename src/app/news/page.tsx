@@ -11,7 +11,7 @@ export default function NewsPage({
   return (
     <>
       <MarketTicker />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 min-h-screen">
         <h1 className="text-3xl font-bold text-[#ECECEC] mb-6 font-inter">
           Crypto News
         </h1>

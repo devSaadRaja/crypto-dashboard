@@ -73,7 +73,7 @@ export default function LeaderboardClient() {
     .slice(0, 10);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container min-h-screen mx-auto px-4 py-8">
       <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[#ECECEC] font-inter">

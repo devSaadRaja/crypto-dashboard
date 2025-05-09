@@ -1,8 +1,9 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Menu, X, Moon, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +25,13 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Function to check if a path is active
+  const isActive = (path: string) => {
+    if (path === "/" && pathname === "/") return true;
+    if (path !== "/" && pathname.startsWith(path)) return true;
+    return false;
+  };
 
   return (
     <header
@@ -49,14 +58,24 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-1">
-            <NavItem href="#" active>
+            <NavItem href="/" active={isActive("/")}>
               Dashboard
             </NavItem>
-            <NavItem href="#">Watchlist</NavItem>
-            <NavItem href="#">Leaderboard</NavItem>
-            <NavItem href="#">News</NavItem>
-            <NavItem href="#">Markets</NavItem>
-            <NavItem href="#">Portfolio</NavItem>
+            <NavItem href="/watchlist" active={isActive("/watchlist")}>
+              Watchlist
+            </NavItem>
+            <NavItem href="/leaderboard" active={isActive("/leaderboard")}>
+              Leaderboard
+            </NavItem>
+            <NavItem href="/news" active={isActive("/news")}>
+              News
+            </NavItem>
+            <NavItem href="/markets" active={isActive("/markets")}>
+              Markets
+            </NavItem>
+            <NavItem href="/portfolio" active={isActive("/portfolio")}>
+              Portfolio
+            </NavItem>
           </nav>
 
           <div className="hidden md:flex items-center space-x-2">
@@ -100,14 +119,27 @@ export default function Header() {
       {isMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 right-0 bg-[#1C1C1C]/95 backdrop-blur-md border-t border-[#2C3E50] py-4 shadow-lg">
           <nav className="flex flex-col space-y-1 px-6">
-            <MobileNavItem href="#" active>
+            <MobileNavItem href="/" active={isActive("/")}>
               Dashboard
             </MobileNavItem>
-            <MobileNavItem href="#">Watchlist</MobileNavItem>
-            <MobileNavItem href="#">Leaderboard</MobileNavItem>
-            <MobileNavItem href="#">News</MobileNavItem>
-            <MobileNavItem href="#">Markets</MobileNavItem>
-            <MobileNavItem href="#">Portfolio</MobileNavItem>
+            <MobileNavItem href="/watchlist" active={isActive("/watchlist")}>
+              Watchlist
+            </MobileNavItem>
+            <MobileNavItem
+              href="/leaderboard"
+              active={isActive("/leaderboard")}
+            >
+              Leaderboard
+            </MobileNavItem>
+            <MobileNavItem href="/news" active={isActive("/news")}>
+              News
+            </MobileNavItem>
+            <MobileNavItem href="/markets" active={isActive("/markets")}>
+              Markets
+            </MobileNavItem>
+            <MobileNavItem href="/portfolio" active={isActive("/portfolio")}>
+              Portfolio
+            </MobileNavItem>
           </nav>
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2C3E50] px-6">
             <Button variant="ghost" size="sm" className="text-[#ECECEC]">
@@ -135,7 +167,7 @@ function NavItem({
   children: React.ReactNode;
 }) {
   return (
-    <a
+    <Link
       href={href}
       className={`relative px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
         active
@@ -147,7 +179,7 @@ function NavItem({
       {active && (
         <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[#00FFAB] rounded-full"></span>
       )}
-    </a>
+    </Link>
   );
 }
 
@@ -161,7 +193,7 @@ function MobileNavItem({
   children: React.ReactNode;
 }) {
   return (
-    <a
+    <Link
       href={href}
       className={`relative px-4 py-3 rounded-lg text-base font-medium ${
         active
@@ -170,6 +202,6 @@ function MobileNavItem({
       }`}
     >
       {children}
-    </a>
+    </Link>
   );
 }

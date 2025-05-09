@@ -8,7 +8,7 @@ import PortfolioAllocation from "@/components/PortfolioAllocation";
 
 export default function PortfolioPage() {
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container min-h-screen mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-[#ECECEC] mb-6 font-inter">
         Portfolio
       </h1>

@@ -59,6 +59,12 @@
   }
 }
 
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
 /* Custom fonts */
 body {
   font-family: "Inter", sans-serif;

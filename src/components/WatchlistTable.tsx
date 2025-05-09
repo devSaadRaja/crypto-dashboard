@@ -135,7 +135,7 @@ export default function WatchlistTable({
                   <img
                     src={coin.image || "/placeholder.svg"}
                     alt={coin.name}
-                    className="h-8 w-8 rounded-full"
+                    className="ml-1 h-8 w-8 rounded-full"
                   />
                 </TableCell>
                 <TableCell className="font-medium text-[#ECECEC] font-inter">
