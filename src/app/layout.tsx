@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 import WagmiConfig from "./WagmiConfig";
 import { Toaster } from "react-hot-toast";
+import Header from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-primary",
 });
-const inter = Inter({
+const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-secondary",
 });
@@ -28,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${poppins.variable} ${inter.variable}`}>
+      <body className={`${inter.variable} ${jetbrains.variable}`}>
         <WagmiConfig>
           <ThemeProvider attribute="class">
             <Toaster
@@ -52,7 +53,10 @@ export default function RootLayout({
               // }}
             />
 
+            <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#2C3E50]/50 to-transparent pointer-events-none" />
+            <Header />
             <div>{children}</div>
+            <Footer />
           </ThemeProvider>
         </WagmiConfig>
       </body>
