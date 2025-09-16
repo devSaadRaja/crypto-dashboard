@@ -303,7 +303,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div className="flex flex-col mb-4 md:mb-0">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-[#00FFAB] to-[#00FFAB]/70 text-transparent bg-clip-text">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 gradient-text">
               Crypto Dashboard
             </h1>
             <p className="text-[#ECECEC]/70">Live market data and analytics</p>
